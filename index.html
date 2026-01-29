@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Рулетка NFT</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{box-sizing:border-box}
+body{
+    margin:0;
+    padding:20px;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    background:linear-gradient(135deg,#0f1225,#050714);
+    color:#fff;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-height:100vh;
+}
+
+/* ===== ЭКРАН ФРИСПИНОВ ===== */
+#preScreen{
+    position:fixed;
+    inset:0;
+    background:rgba(5,7,20,.96);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+}
+
+#drumBox{
+    width:120px;
+    height:120px;
+    overflow:hidden;
+    border-radius:16px;
+    border:2px solid gold;
+    margin-bottom:20px;
+    background:#0b0e1f;
+}
+
+#drum{
+    display:flex;
+    flex-direction:column;
+}
+
+.drumItem{
+    height:120px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:42px;
+    font-weight:700;
+}
+
+#enterSpin{
+    padding:14px 36px;
+    border:none;
+    border-radius:26px;
+    background:gold;
+    font-size:16px;
+    cursor:pointer;
+}
+
+/* ===== NFT РУЛЕТКА ===== */
+#app{
+    display:none;
+    flex-direction:column;
+    align-items:center;
+}
+
+h1{
+    margin:10px 0 25px;
+    padding:14px 34px;
+    font-size:26px;
+    border-radius:22px;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,215,0,.6);
+}
+#wheel-container{
+    width:100%;
+    max-width:720px;
+    height:220px;
+    overflow:hidden;
+    border-radius:20px;
+    background:#0b0e1f;
+    position:relative;
+}
+#arrow{
+    position:absolute;
+    top:0;
+    left:50%;
+    transform:translateX(-50%);
+    width:2px;
+    height:100%;
+    background:#ff3b3b;
+    z-index:999;
+}
+#wheel{
+    display:flex;
+    transition:transform 6.5s cubic-bezier(.08,.9,.1,1);
+}
+.prize{
+    width:140px;
+    height:200px;
+    margin:0 5px;
+    flex-shrink:0;
+    border-radius:16px;
+    background:#1a1d35;
+    border:2px solid #2d3055;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+}
+.prize img{
+    max-width:110px;
+    max-height:110px;
+    border-radius:10px;
+    margin-bottom:6px;
+}
+button{
+    margin-top:18px;
+    padding:14px 36px;
+    border:none;
+    border-radius:28px;
+    font-size:16px;
+    cursor:pointer;
+}
+#spinBtn{background:#ff3b3b;color:#fff}
+#spinBtn:disabled{opacity:.6;cursor:not-allowed}
+#getGiftBtn{background:gold;color:#000;display:none}
+#closeBtn{background:#333;color:#fff}
+#result{margin-top:16px;display:none}
+#onlineCounter{
+    position:fixed;
+    top:10px;
+    left:10px;
+    padding:6px 12px;
+    border-radius:12px;
+    background:rgba(0,0,0,.55);
+    font-size:13px;
+}
+#miniBar{
+    position:fixed;
+    right:10px;
+    bottom:14px;
+    width:240px;
+    display:flex;
+    flex-direction:column-reverse;
+    gap:6px;
+}
+.feed{
+    background:rgba(0,0,0,.6);
+    padding:6px 8px;
+    border-radius:10px;
+    font-size:12px;
+}
+@media(max-width:600px){
+    #miniBar{
+        right:50%;
+        transform:translateX(50%);
+        bottom:80px;
+        width:90%;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ===== ЭКРАН ФРИСПИНОВ ===== -->
+<div id="preScreen">
+    <h2>🎁 Фриспины</h2>
+    <div id="drumBox">
+        <div id="drum"></div>
+    </div>
+    <button id="enterSpin">Получить фриспины</button>
+</div>
+
+<!-- ===== NFT РУЛЕТКА ===== -->
+<div id="app">
+<h1>🎁 Рулетка NFT-подарков</h1>
+
+<div id="wheel-container">
+    <div id="arrow"></div>
+    <div id="wheel"></div>
+</div>
+
+<button id="spinBtn">Крутить</button>
+<div id="result"></div>
+<button id="getGiftBtn">Получить подарок</button>
+<button id="closeBtn">Закрыть</button>
+
+<div id="onlineCounter"></div>
+<div id="miniBar"></div>
+
+<audio id="winSound" preload="auto"
+src="https://image2url.com/r2/default/audio/1769643999529-e3ec9dec-df5e-4b91-a2a4-e6982a82ab7e.mp3"></audio>
+</div>
+
+<script>
+/* ===== БАРАБАН ФРИСПИНОВ ===== */
+const drum=document.getElementById('drum');
+const enterBtn=document.getElementById('enterSpin');
+const preScreen=document.getElementById('preScreen');
+const app=document.getElementById('app');
+
+let enterLock=false;
+
+/* наполняем барабан */
+for(let i=0;i<20;i++){
+    for(let n=1;n<=10;n++){
+        const d=document.createElement('div');
+        d.className='drumItem';
+        d.style.height='120px';
+        d.style.display='flex';
+        d.style.alignItems='center';
+        d.style.justifyContent='center';
+        d.style.fontSize='42px';
+        d.style.fontWeight='700';
+        d.textContent=n;
+        drum.appendChild(d);
+    }
+}
+
+enterBtn.onclick=()=>{
+    if(enterLock) return;
+    enterLock=true;
+    enterBtn.disabled=true;
+
+    /* ВСЕГДА 1 */
+    const itemHeight=120;
+    const targetIndex=10; // позиция "1"
+    const offset=targetIndex*itemHeight + Math.random()*50;
+
+    drum.style.transition='transform 3.5s cubic-bezier(.08,.9,.1,1)';
+    drum.style.transform=`translateY(-${offset}px)`;
+
+    setTimeout(()=>{
+        alert("🎉 Вам выпал 1 фриспин!");
+        preScreen.style.display='none';
+        app.style.display='flex';
+    },3600);
+};
+
+/* ===== СТАРЫЙ КОД NFT РУЛЕТКИ ===== */
+const prizes=[
+{label:"Precious Peach",img:"https://i.imgur.com/2yRxnFO.jpeg",cost:58297},
+{label:"Nail Bracelet",img:"https://i.imgur.com/I0OTDPZ.jpeg",cost:38432},
+{label:"Astral Shard",img:"https://i.imgur.com/GfJhqte.jpeg",cost:27992},
+{label:"Loot Bag",img:"https://i.imgur.com/FWv82Jo.jpeg",cost:13488},
+{label:"Gem Signet",img:"https://i.imgur.com/GUVA6Ag.jpeg",cost:15642},
+{label:"Diamond",img:"https://i.imgur.com/fBU1h2j.jpeg",cost:100},
+{label:"Ring",img:"https://i.imgur.com/IOY4GTw.jpeg",cost:100},
+{label:"Champagne",img:"https://i.imgur.com/FfV5cNa.jpeg",cost:50}
+];
+
+const wheel=document.getElementById('wheel');
+const miniBar=document.getElementById('miniBar');
+const result=document.getElementById('result');
+const getGiftBtn=document.getElementById('getGiftBtn');
+const winSound=document.getElementById('winSound');
+const spinBtn=document.getElementById('spinBtn');
+
+let spinning=false;
+
+/* лента */
+for(let i=0;i<25;i++){
+    prizes.forEach(p=>{
+        const d=document.createElement('div');
+        d.className='prize';
+        d.dataset.name=p.label;
+        d.dataset.cost=p.cost;
+        d.innerHTML=`<img src="${p.img}"><div>${p.label}</div><div>${p.cost} ⭐</div>`;
+        wheel.appendChild(d);
+    });
+}
+
+/* минибар */
+function addMini(t){
+    const d=document.createElement('div');
+    d.className='feed';
+    d.textContent=t;
+    miniBar.prepend(d);
+    while(miniBar.children.length>4) miniBar.lastChild.remove();
+}
+
+/* онлайн */
+let online=420;
+setInterval(()=>{
+    online+=Math.floor(Math.random()*3)-1;
+    online=Math.max(350,online);
+    onlineCounter.textContent=`Онлайн: ${online}`;
+},2000);
+
+/* фейк выигрыши */
+setInterval(()=>{
+    const p=prizes[Math.floor(Math.random()*prizes.length)];
+    addMini(`Пользователь выбил ${p.label} за ${p.cost} ⭐`);
+},2500);
+
+/* СПИН */
+spinBtn.onclick=()=>{
+    if(spinning) return;
+    spinning=true;
+    spinBtn.disabled=true;
+
+    result.style.display='none';
+    getGiftBtn.style.display='none';
+
+    wheel.style.transition='none';
+    wheel.style.transform='translateX(0)';
+    wheel.offsetHeight;
+
+    wheel.style.transition='transform 6.5s cubic-bezier(.08,.9,.1,1)';
+
+    const max=wheel.scrollWidth-wheel.parentElement.offsetWidth;
+    const offset=Math.random()*300+max*0.6;
+
+    wheel.style.transform=`translateX(-${offset}px)`;
+
+    setTimeout(()=>{
+        const center=wheel.parentElement.getBoundingClientRect().left+
+        wheel.parentElement.offsetWidth/2;
+
+        let win=null;
+        document.querySelectorAll('.prize').forEach(i=>{
+            const r=i.getBoundingClientRect();
+            const c=r.left+r.width/2;
+            if(Math.abs(c-center)<r.width/2) win=i;
+        });
+
+        if(win){
+            winSound.currentTime=0;
+            winSound.volume=0.45;
+            winSound.play();
+
+            result.style.display='block';
+            result.innerHTML=`🎉 Вы выиграли <b>${win.dataset.name}</b><br>${win.dataset.cost} ⭐`;
+            getGiftBtn.style.display='block';
+            addMini(`Вы выиграли ${win.dataset.name} за ${win.dataset.cost} ⭐`);
+        }
+
+        spinning=false;
+        spinBtn.disabled=false;
+
+    },6500);
+};
+
+getGiftBtn.onclick=()=>{
+    alert("Чтобы забрать подарок следуйте дальнейшим инструкциям в самом боте!");
+};
+</script>
+
+</body>
+</html>
