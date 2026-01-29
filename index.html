@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Рулетка NFT-подарков</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<style>
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #fff;
+    text-align: center;
+    margin: 0;
+    padding: 10px;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+h1 {
+    font-weight: 700;
+    font-size: 24px;
+    margin-bottom: 15px;
+    background: linear-gradient(90deg, #ffd700, #ffed4e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    padding: 10px 20px;
+    border: 2px solid rgba(255, 215, 0, 0.5);
+    border-radius: 16px;
+    display: inline-block;
+}
+
+#wheel-container {
+    width: calc(100% - 20px);
+    height: 200px;
+    margin: 10px auto 20px auto;
+    overflow: hidden;
+    border-radius: 20px;
+    background: linear-gradient(145deg, #1a1a2e, #0f1123);
+    position: relative;
+}
+
+#wheel {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    padding: 0 5px;
+}
+
+.prize {
+    width: 110px;
+    height: 170px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin: 0 4px;
+    background: linear-gradient(145deg, #2d2d42, #1f1f30);
+    border-radius: 12px;
+    border: 2px solid rgba(255,255,255,0.1);
+    transition: transform 0.3s ease;
+    position: relative;
+    padding: 8px 5px;
+}
+
+.prize img {
+    width: 85px;
+    height: 85px;
+    object-fit: contain;
+    margin-bottom: 6px;
+    border-radius: 10px;
+}
+
+.prize-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 2px;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.prize-cost {
+    font-size: 10px;
+    color: #ffd700;
+    font-weight: 600;
+}
+
+.prize.center {
+    transform: scale(1.15);
+    box-shadow: 0 0 25px 6px rgba(255, 215, 0, 0.4),
+                0 0 50px 15px rgba(255, 215, 0, 0.1) inset;
+    border-color: #ffd700;
+    z-index: 10;
+}
+
+#arrow {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, #ff3b3b, #ff6f61);
+    z-index: 20;
+}
+
+#arrow::before {
+    content: '▼';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #ff3b3b;
+    font-size: 20px;
+    text-shadow: 0 0 10px #ff3b3b;
+}
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 15px 10px;
+}
+
+#spinBtn {
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #ff3b3b, #ff6f61);
+    color: white;
+    transition: all 0.2s ease;
+    letter-spacing: 0.5px;
+}
+
+#spinBtn:active {
+    transform: scale(0.97);
+}
+
+#spinBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: linear-gradient(135deg, #666, #888);
+}
+
+#result {
+    margin: 15px 10px;
+    padding: 15px;
+    background: rgba(255,215,0,0.08);
+    border-radius: 16px;
+    border: 1px solid rgba(255,215,0,0.2);
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffd700;
+    display: none;
+}
+
+#getGiftBtn, #closeBtn {
+    width: 80%;
+    max-width: 280px;
+    margin: 8px auto;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    display: none;
+}
+
+#getGiftBtn {
+    background: linear-gradient(135deg, #ffd700, #ffea00);
+    color: #111;
+}
+
+#closeBtn {
+    background: #333;
+    color: #fff;
+}
+
+#onlineCounter {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.5);
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    color: #fff;
+    z-index: 1000;
+}
+
+#miniBar {
+    position: fixed;
+    bottom: 80px;
+    right: 10px;
+    max-width: 200px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 12px;
+    padding: 6px 10px;
+    font-size: 12px;
+    color: #fff;
+    max-height: 300px;
+    overflow: hidden;
+    z-index: 1000;
+}
+@media (max-width:480px){
+    h1{font-size:20px; padding:8px 12px;}
+    #wheel-container{height:180px;}
+    .prize{width:90px;height:150px;}
+    .prize img{width:70px;height:70px;}
+    .controls{gap:8px;}
+    #result{font-size:14px;}
+    #getGiftBtn,#closeBtn{width:90%;}
+    #miniBar{max-width:150px; bottom:60px;}
+}
+</style>
+</head>
+<body>
+
+<h1>🎁 Рулетка NFT-подарков</h1>
+
+<div id="onlineCounter">Онлайн: <span id="onlineCount">0</span></div>
+<div id="miniBar"></div>
+
+<div id="wheel-container">
+  <div id="arrow"></div>
+  <div id="wheel"></div>
+</div>
+
+<div class="controls">
+    <input type="text" id="nicknameInput" placeholder="Введите ваш ник" style="padding:12px; font-size:16px; border-radius:12px; border:none; width:80%; max-width:300px; margin-bottom:8px;">
+    <button id="spinBtn" disabled>🎰 Крутить рулетку</button>
+</div>
+
+<div id="result"></div>
+<button id="getGiftBtn">Получить подарок</button>
+<button id="closeBtn">Закрыть</button>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+const prizes = [
+    { label: "Precious Peach", img: "https://i.imgur.com/2yRxnFO.jpeg", weight: 2, cost: 58297 },
+    { label: "Nail Bracelet", img: "https://i.imgur.com/I0OTDPZ.jpeg", weight: 3, cost: 38432 },
+    { label: "Astral Shard", img: "https://i.imgur.com/GfJhqte.jpeg", weight: 4, cost: 27992 },
+    { label: "Loot Bag", img: "https://i.imgur.com/FWv82Jo.jpeg", weight: 5, cost: 13488 },
+    { label: "Gem Signet", img: "https://i.imgur.com/GUVA6Ag.jpeg", weight: 6, cost: 15642 },
+    { label: "Artisan Brick", img: "https://i.imgur.com/9cOITRi.jpeg", weight: 7, cost: 9992 },
+    { label: "Signet Ring", img: "https://i.imgur.com/iX8ucHl.jpeg", weight: 8, cost: 8192 },
+    { label: "Бриллиант", img: "https://i.imgur.com/fBU1h2j.jpeg", weight: 15, cost: 100 },
+    { label: "Кольцо", img: "https://i.imgur.com/IOY4GTw.jpeg", weight: 15, cost: 100 },
+    { label: "Кубок", img: "https://i.imgur.com/nLAgng1.jpeg", weight: 15, cost: 100 },
+    { label: "Шампанское", img: "https://i.imgur.com/FfV5cNa.jpeg", weight: 20, cost: 50 },
+    { label: "Подарочек", img: "https://i.imgur.com/1VPUHDT.jpeg", weight: 25, cost: 25 },
+    { label: "Роза", img: "https://i.imgur.com/yDyzdsK.jpeg", weight: 25, cost: 25 },
+    { label: "Мишка", img: "https://i.imgur.com/JbhoMQq.jpeg", weight: 25, cost: 15 },
+    { label: "Сердечко", img: "https://i.imgur.com/h0rdv9c.jpeg", weight: 25, cost: 15 }
+];
+
+const wheel = document.getElementById('wheel');
+const spinBtn = document.getElementById('spinBtn');
+const resultDiv = document.getElementById('result');
+const getGiftBtn = document.getElementById('getGiftBtn');
+const closeBtn = document.getElementById('closeBtn');
+const nicknameInput = document.getElementById('nicknameInput');
+const onlineCount = document.getElementById('onlineCount');
+const miniBar = document.getElementById('miniBar');
+
+let userNick = '';
+let winSound;
+
+// Создаём рулетку
+const prizeSequence = [];
+for(let i=0;i<20;i++) prizeSequence.push(...prizes);
+prizeSequence.forEach(p=>{
+    const div=document.createElement('div');
+    div.className='prize';
+    div.innerHTML=`<img src="${p.img}"><div>${p.label}</div><div style="font-size:12px;color:#ccc;">${p.cost} ⭐</div>`;
+    wheel.appendChild(div);
+});
+
+// Ник ввод
+nicknameInput.addEventListener('input', ()=>{
+    spinBtn.disabled = nicknameInput.value.trim() === '';
+});
+
+spinBtn.addEventListener('click', ()=>{
+    userNick = nicknameInput.value.trim();
+    winSound = new Audio("https://image2url.com/r2/default/audio/1769643999529-e3ec9dec-df5e-4b91-a2a4-e6982a82ab7e.mp3");
+    winSound.volume = 0.5;
+
+    const totalWeight = prizes.reduce((sum,p)=>sum+p.weight,0);
+    let rand = Math.random()*totalWeight;
+    let selectedIndex=0, cumulative=0;
+    for(let i=0;i<prizes.length;i++){
+        cumulative+=prizes[i].weight;
+        if(rand<=cumulative){ selectedIndex=i; break; }
+    }
+
+    const prizeWidth = 110;
+    const middle = Math.floor(prizeSequence.length/2);
+    const targetIndex = middle*prizes.length + selectedIndex;
+    const containerWidth = wheel.parentElement.offsetWidth;
+    const targetOffset = targetIndex*prizeWidth - containerWidth/2 + prizeWidth/2;
+
+    let currentOffset=0;
+    let speed = 50;
+    const deceleration = 0.995;
+
+    const animate = ()=>{
+        currentOffset += speed;
+        if(currentOffset >= targetOffset) currentOffset = targetOffset;
+        wheel.style.transform = `translateX(-${currentOffset}px)`;
+
+        const children = wheel.children;
+        let prizeAtCenter = null;
+        const wheelRect = wheel.parentElement.getBoundingClientRect();
+        const center = wheelRect.left + wheelRect.width/2;
+        for(let i=0;i<children.length;i++){
+            const child = children[i];
+            const rect = child.getBoundingClientRect();
+            const diff = Math.abs(rect.left + rect.width/2 - center);
+            const scale = Math.max(0.7, 1 - diff/300);
+            const yOffset = (1 - scale) * 30;
+            child.style.transform = `scale(${scale}) translateY(${yOffset}px)`;
+
+            if(diff < prizeWidth/2){
+                child.classList.add('center');
+                prizeAtCenter = prizeSequence[i];
+            } else {
+                child.classList.remove('center');
+            }
+        }
+
+        speed *= deceleration;
+        if(speed>0.2 && currentOffset<targetOffset){
+            requestAnimationFrame(animate);
+        } else {
+            wheel.style.transform = `translateX(-${targetOffset}px)`;
+            resultDiv.innerHTML = `🎉 Поздравляем! Вы выиграли <b>${prizeAtCenter.label}</b> за <b>${prizeAtCenter.cost} ⭐</b>!`;
+            resultDiv.style.display = 'block';
+            getGiftBtn.style.display='block';
+            closeBtn.style.display='block';
+
+            if(winSound){
+                winSound.currentTime = 0;
+                winSound.play();
+            }
+
+            // Добавляем в минибар
+            const nick = userNick || `Игрок${Math.floor(Math.random()*999)}`;
+            addMiniBar(`${nick} выбил ${prizeAtCenter.label} за ${prizeAtCenter.cost} ⭐`);
+        }
+    };
+    animate();
+});
+
+// Получить подарок
+getGiftBtn.addEventListener('click', ()=>{
+    alert("Чтобы забрать подарок следуйте дальнейшим инструкциям в самом боте!");
+});
+
+// Закрыть
+closeBtn.addEventListener('click', ()=>tg.close());
+
+// Онлайн счётчик
+let online = Math.floor(Math.random()*270)+300;
+onlineCount.textContent=online;
+setInterval(()=>{
+    let change = Math.floor(Math.random()*10)-5; // -5..4
+    online += change;
+    if(online<0) online=0;
+    onlineCount.textContent=online;
+},1500);
+
+// Минибар
+function addMiniBar(text){
+    const div=document.createElement('div');
+    div.textContent=text;
+    miniBar.prepend(div);
+    if(miniBar.children.length>10) miniBar.removeChild(miniBar.lastChild);
+}
+
+// Автоматический фейковый минибар
+const fakeNames = ["Анюта","Алиса","Аленочка","Машулька","DarkFantast","ShadowX","NeoPlayer","GamerGirl"];
+setInterval(()=>{
+    const name = fakeNames[Math.floor(Math.random()*fakeNames.length)];
+    const prize = prizes[Math.floor(Math.random()*prizes.length)];
+    addMiniBar(`${name} выбил ${prize.label} за ${prize.cost} ⭐`);
+},3000);
+</script>
+
+</body>
+</html>
