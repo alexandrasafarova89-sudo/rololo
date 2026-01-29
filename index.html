@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Рулетка NFT-подарков</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background: linear-gradient(135deg,#1a1a2e,#0f1123);
+    color:#fff;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    min-height:100vh;
+    overflow-x:hidden;
+    padding:20px;
+}
+h1 {
+    font-family: 'Arial Black', sans-serif;
+    font-size:28px;
+    margin-bottom:20px;
+    background: rgba(255,255,255,0.1);
+    border-radius:20px;
+    padding:15px 25px;
+    border:2px solid #ffd700;
+    box-shadow:0 4px 10px rgba(0,0,0,0.4);
+    text-align:center;
+}
+#wheel-container {
+    width:100%;
+    max-width:720px;
+    height:220px;
+    margin:20px 0;
+    overflow:hidden;
+    border-radius:16px;
+    background: linear-gradient(145deg,#1f1f1f,#111);
+    box-shadow:0 8px 24px rgba(0,0,0,0.5);
+    position:relative;
+    display:none;
+}
+#wheel {
+    display:flex;
+    transition:transform 0s linear;
+}
+.prize {
+    width:140px;
+    height:200px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    margin:0 5px;
+    background:#1b1b1b;
+    border-radius:8px;
+    border:2px solid #333;
+    box-shadow:0 4px 12px rgba(0,0,0,0.4);
+    transition:transform 0.3s ease, box-shadow 0.3s ease;
+}
+.prize img {
+    max-width:120px;
+    max-height:120px;
+    margin-bottom:8px;
+    border-radius:6px;
+}
+.prize.center {
+    box-shadow:0 0 25px 6px #ffd700,0 0 40px 12px #ffea00 inset;
+    animation: glowJump 1s infinite;
+}
+@keyframes glowJump {
+    0%,100%{transform:translateY(0) scale(1);}
+    25%{transform:translateY(-5px) scale(1.05);}
+    50%{transform:translateY(0) scale(1);}
+    75%{transform:translateY(-3px) scale(1.03);}
+}
+#arrow {
+    position:absolute;
+    top:0;
+    left:50%;
+    transform:translateX(-50%);
+    width:2px;
+    height:220px;
+    background:#ff3b3b;
+    z-index:10;
+    filter: drop-shadow(0 0 6px #ff3b3b);
+}
+#nicknameContainer {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    margin-top:50px;
+}
+#nicknameContainer input {
+    padding:12px 15px;
+    border-radius:25px;
+    border:2px solid #ffd700;
+    font-size:16px;
+    width:80%;
+    max-width:300px;
+    margin-bottom:15px;
+}
+#nicknameContainer button {
+    padding:12px 25px;
+    border-radius:25px;
+    border:none;
+    background: linear-gradient(135deg,#ff3b3b,#ff6f61);
+    color:#fff;
+    font-weight:600;
+    font-size:16px;
+    cursor:pointer;
+}
+#spinBtn, #getGiftBtn, #closeBtn {
+    padding:15px 30px;
+    border-radius:30px;
+    border:none;
+    font-weight:600;
+    font-size:16px;
+    cursor:pointer;
+    margin:10px 0;
+    display:none;
+}
+#spinBtn {
+    background: linear-gradient(135deg,#ff3b3b,#ff6f61);
+    color:#fff;
+}
+#getGiftBtn {
+    background:#ffd700;
+    color:#000;
+}
+#closeBtn {
+    background:#333;
+    color:#fff;
+}
+#result {
+    margin:15px 0;
+    text-align:center;
+    font-size:18px;
+    display:none;
+}
+#miniBar {
+    position:fixed;
+    right:15px;
+    bottom:15px;
+    max-height:300px;
+    width:220px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column-reverse;
+    align-items:flex-start;
+    z-index:999;
+}
+#miniBar div {
+    background: rgba(0,0,0,0.5);
+    padding:5px 8px;
+    border-radius:10px;
+    margin-top:5px;
+    font-size:12px;
+}
+#onlineCounter {
+    position:fixed;
+    left:15px;
+    top:15px;
+    background: rgba(0,0,0,0.5);
+    padding:5px 10px;
+    border-radius:10px;
+    font-size:14px;
+    z-index:999;
+}
+@media(max-width:480px){
+    #wheel-container {height:180px;}
+    .prize {width:100px;height:160px;margin:0 3px;}
+    .prize img {max-width:80px;max-height:80px;}
+    #miniBar {width:140px; max-height:200px;}
+}
+</style>
+</head>
+<body>
+
+<h1>🎁 Рулетка NFT-подарков</h1>
+
+<div id="nicknameContainer">
+    <input type="text" id="nicknameInput" placeholder="Введите ваш никнейм">
+    <button id="nicknameSubmit">Продолжить</button>
+</div>
+
+<div id="wheel-container">
+    <div id="arrow"></div>
+    <div id="wheel"></div>
+</div>
+
+<button id="spinBtn">Крутить рулетку</button>
+<div id="result"></div>
+<button id="getGiftBtn">Получить подарок</button>
+<button id="closeBtn">Закрыть</button>
+
+<div id="miniBar"></div>
+<div id="onlineCounter"></div>
+
+<audio id="winSound" src="https://image2url.com/r2/default/audio/1769643999529-e3ec9dec-df5e-4b91-a2a4-e6982a82ab7e.mp3"></audio>
+
+<script>
+const tg = window.Telegram?.WebApp;
+if(tg) tg.expand();
+
+const prizes=[
+{label:"Precious Peach",img:"https://i.imgur.com/2yRxnFO.jpeg",weight:2,cost:58297},
+{label:"Nail Bracelet",img:"https://i.imgur.com/I0OTDPZ.jpeg",weight:3,cost:38432},
+{label:"Astral Shard",img:"https://i.imgur.com/GfJhqte.jpeg",weight:4,cost:27992},
+{label:"Loot Bag",img:"https://i.imgur.com/FWv82Jo.jpeg",weight:5,cost:13488},
+{label:"Gem Signet",img:"https://i.imgur.com/GUVA6Ag.jpeg",weight:6,cost:15642},
+{label:"Artisan Brick",img:"https://i.imgur.com/9cOITRi.jpeg",weight:7,cost:9992},
+{label:"Signet Ring",img:"https://i.imgur.com/iX8ucHl.jpeg",weight:8,cost:8192},
+{label:"Diamond",img:"https://i.imgur.com/fBU1h2j.jpeg",weight:15,cost:100},
+{label:"Ring",img:"https://i.imgur.com/IOY4GTw.jpeg",weight:15,cost:100},
+{label:"Cup",img:"https://i.imgur.com/nLAgng1.jpeg",weight:15,cost:100},
+{label:"Champagne",img:"https://i.imgur.com/FfV5cNa.jpeg",weight:20,cost:50},
+{label:"Gift",img:"https://i.imgur.com/1VPUHDT.jpeg",weight:25,cost:25},
+{label:"Rose",img:"https://i.imgur.com/yDyzdsK.jpeg",weight:25,cost:25},
+{label:"Teddy",img:"https://i.imgur.com/JbhoMQq.jpeg",weight:25,cost:15},
+{label:"Heart",img:"https://i.imgur.com/h0rdv9c.jpeg",weight:25,cost:15}
+];
+
+const fakeNames=["Анюта","Алиса","Аленочка","Машулька","DarkFantast","ShadowX","Luna🌙","Star⭐","Neo","Pixel"];
+const wheel=document.getElementById("wheel");
+const spinBtn=document.getElementById("spinBtn");
+const getGiftBtn=document.getElementById("getGiftBtn");
+const closeBtn=document.getElementById("closeBtn");
+const resultDiv=document.getElementById("result");
+const miniBar=document.getElementById("miniBar");
+const onlineCounter=document.getElementById("onlineCounter");
+const nicknameContainer=document.getElementById("nicknameContainer");
+const nicknameInput=document.getElementById("nicknameInput");
+const nicknameSubmit=document.getElementById("nicknameSubmit");
+const winSound=document.getElementById("winSound");
+
+let userNick="";
+let isSpinning=false;
+let onlineCount= Math.floor(Math.random()*270+300);
+
+// создать последовательность барабана
+const prizeSequence=[];
+for(let i=0;i<20;i++) prizeSequence.push(...prizes);
+prizeSequence.forEach(p=>{
+    const div=document.createElement('div');
+    div.className='prize';
+    div.innerHTML=`<img src="${p.img}" alt="${p.label}"><div>${p.label}</div><div style="font-size:12px;color:#ccc;">${p.cost} ⭐</div>`;
+    wheel.appendChild(div);
+});
+
+// минибар
+function addMiniBar(text){
+    const div=document.createElement('div');
+    div.textContent=text;
+    miniBar.prepend(div);
+    const maxItems = window.innerWidth <= 480 ? 4 : 10;
+    while(miniBar.children.length > maxItems){
+        miniBar.removeChild(miniBar.lastChild);
+    }
+}
+
+// постоянные фейковые обновления
+function fakeMiniBarUpdates(){
+    const fakeUser=fakeNames[Math.floor(Math.random()*fakeNames.length)];
+    const fakePrize=prizes[Math.floor(Math.random()*prizes.length)];
+    addMiniBar(`${fakeUser} выбил ${fakePrize.label} за ${fakePrize.cost} ⭐`);
+    setTimeout(fakeMiniBarUpdates,2000+Math.random()*1000);
+}
+
+// онлайн
+function updateOnline(){
+    onlineCounter.textContent=`Онлайн: ${onlineCount}`;
+    setTimeout(()=>{
+        onlineCount+=Math.floor(Math.random()*3)-1; // -1,0,+1
+        if(onlineCount<300) onlineCount=300;
+        if(onlineCount>569) onlineCount=569;
+        updateOnline();
+    },2000);
+}
+
+// запуск после ввода ника
+nicknameSubmit.addEventListener('click',()=>{
+    userNick=nicknameInput.value.trim();
+    if(!userNick) return alert("Введите никнейм!");
+    nicknameContainer.style.display='none';
+    document.getElementById("wheel-container").style.display='block';
+    spinBtn.style.display='block';
+    closeBtn.style.display='block';
+    resultDiv.style.display='block';
+    onlineCounter.style.display='block';
+    updateOnline();
+    fakeMiniBarUpdates();
+});
+
+// спин рулетки
+spinBtn.addEventListener('click',()=>{
+    if(isSpinning) return;
+    isSpinning=true;
+    let totalWeight=prizes.reduce((sum,p)=>sum+p.weight,0);
+    let rand=Math.random()*totalWeight;
+    let selectedIndex=0, cumulative=0;
+    for(let i=0;i<prizes.length;i++){
+        cumulative+=prizes[i].weight;
+        if(rand<=cumulative){ selectedIndex=i; break; }
+    }
+    const prizeWidth=140;
+    const middle=Math.floor(prizeSequence.length/2);
+    const targetIndex=middle*prizes.length+selectedIndex;
+    const containerWidth=wheel.parentElement.offsetWidth;
+    const targetOffset=targetIndex*prizeWidth - containerWidth/2 + prizeWidth/2;
+
+    let currentOffset=0;
+    let speed=35+Math.random()*15;
+    const deceleration=0.9955;
+
+    function animate(){
+        currentOffset+=speed;
+        if(currentOffset>=targetOffset) currentOffset=targetOffset;
+        wheel.style.transform=`translateX(-${currentOffset}px)`;
+
+        const children=wheel.children;
+        let prizeAtCenter=null;
+        for(let i=0;i<children.length;i++){
+            const child=children[i];
+            const rect=child.getBoundingClientRect();
+            const wheelRect=wheel.parentElement.getBoundingClientRect();
+            const center=wheelRect.left + wheelRect.width/2;
+            const diff=Math.abs(rect.left + rect.width/2 - center);
+            const scale=Math.max(0.7,1 - diff/300);
+            const yOffset=(1-scale)*30;
+            child.style.transform=`scale(${scale}) translateY(${yOffset}px)`;
+            if(diff<prizeWidth/2){
+                child.classList.add('center');
+                prizeAtCenter=prizeSequence[i];
+            } else child.classList.remove('center');
+        }
+
+        speed*=deceleration;
+        if(speed>0.2 && currentOffset<targetOffset){
+            requestAnimationFrame(animate);
+        } else {
+            wheel.style.transform=`translateX(-${targetOffset}px)`;
+            resultDiv.innerHTML=`🎉 Поздравляем! Вы выиграли <b>${prizeAtCenter.label}</b> за <b>${prizeAtCenter.cost} ⭐</b>!<br><img src="${prizeAtCenter.img}" style="max-height:100px;margin-top:5px;">`;
+            winSound.play();
+            addMiniBar(`${userNick} выбил ${prizeAtCenter.label} за ${prizeAtCenter.cost} ⭐`);
+            getGiftBtn.style.display='block';
+            isSpinning=false;
+        }
+    }
+    animate();
+});
+
+// получить подарок
+getGiftBtn.addEventListener('click',()=>{
+    alert("Чтобы забрать подарок следуйте дальнейшим инструкциям в самом боте!");
+});
+
+// закрыть
+closeBtn.addEventListener('click',()=>tg?.close());
+</script>
+</body>
+</html>
